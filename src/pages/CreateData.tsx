@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Upload, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useDropzone } from 'react-dropzone';
+import { runTagging } from '@/lib/api';
 
 const CreateData = () => {
   const [textInput, setTextInput] = useState('');
@@ -73,14 +74,7 @@ const CreateData = () => {
       
       formData.append('payload', '');
 
-      const response = await fetch('http://127.0.0.1:8000/tagging/run', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'accept': 'application/json',
-        },
-        body: formData,
-      });
+      const response = await runTagging(formData);
 
       if (response.ok) {
         const data = await response.json();

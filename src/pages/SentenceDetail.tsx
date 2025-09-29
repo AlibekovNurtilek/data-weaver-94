@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { posDictionary } from '@/lib/posDictionary';
 import { featuresDictionary } from '@/lib/featuresDictionary';
+import { fetchSentenceDetail, updateSentence } from '@/lib/api';
 
 interface Feature {
   label: string;
@@ -40,13 +42,10 @@ const SentenceDetailPage = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const fetchSentenceDetail = async () => {
+  const fetchSentenceData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/tagging/sentences/${id}`, {
-        credentials: 'include',
-        headers: { 'accept': 'application/json' },
-      });
+      const response = await fetchSentenceDetail(Number(id));
 
       if (response.ok) {
         const data = await response.json();
@@ -71,7 +70,7 @@ const SentenceDetailPage = () => {
 
   useEffect(() => {
     if (id) {
-      fetchSentenceDetail();
+      fetchSentenceData();
     }
   }, [id]);
 
@@ -139,15 +138,7 @@ const SentenceDetailPage = () => {
         tokens: sentence.tokens
       };
 
-      const response = await fetch(`http://127.0.0.1:8000/tagging/sentences/${id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await updateSentence(Number(id), payload);
 
       if (response.ok) {
         toast({
@@ -218,41 +209,45 @@ const SentenceDetailPage = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            {sentence.tokens.map((token, tokenIndex) => (
-              <div key={token.id} className="border border-border rounded-lg p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <Label>Индекс</Label>
-                    <Input value={token.token_index} disabled />
-                  </div>
-                  
-                  <div>
-                    <Label>Форма</Label>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-foreground">№</TableHead>
+                <TableHead className="text-foreground">Форма</TableHead>
+                <TableHead className="text-foreground">Лемма</TableHead>
+                <TableHead className="text-foreground">Сөз түркүмдөрү</TableHead>
+                <TableHead className="text-foreground">Белгилер</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sentence.tokens.map((token, tokenIndex) => (
+                <TableRow key={token.id}>
+                  <TableCell className="text-foreground font-medium">
+                    {token.token_index}
+                  </TableCell>
+                  <TableCell>
                     <Input
                       value={token.form}
                       onChange={(e) => updateToken(tokenIndex, 'form', e.target.value)}
+                      className="min-w-[120px] bg-background text-foreground border-border"
                     />
-                  </div>
-                  
-                  <div>
-                    <Label>Лемма</Label>
+                  </TableCell>
+                  <TableCell>
                     <Input
                       value={token.lemma}
                       onChange={(e) => updateToken(tokenIndex, 'lemma', e.target.value)}
+                      className="min-w-[120px] bg-background text-foreground border-border"
                     />
-                  </div>
-                  
-                  <div>
-                    <Label>Сөз туркумдору</Label>
-                    <Select 
-                      value={token.pos} 
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={token.pos}
                       onValueChange={(value) => {
                         updateToken(tokenIndex, 'pos', value);
                         updateToken(tokenIndex, 'xpos', value.toLowerCase());
                       }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="min-w-[150px] bg-background text-foreground border-border">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -263,85 +258,80 @@ const SentenceDetailPage = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <Label className="text-base font-medium">Признаки (Features)</Label>
-                  
-                  {/* Display existing features */}
-                  <div className="space-y-2">
-                    {Object.entries(token.feats).map(([featureKey, featureValue]) => {
-                      const posFeatures = featuresDictionary[token.pos as keyof typeof featuresDictionary];
-                      const feature = posFeatures?.[featureKey] as Feature | undefined;
-                      
-                      return (
-                        <div key={featureKey} className="flex items-center space-x-2 p-3 bg-muted rounded-lg">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-foreground">
-                              {feature?.label || featureKey}
-                            </p>
-                            <Select
-                              value={featureValue}
-                              onValueChange={(value) => updateFeature(tokenIndex, featureKey, value)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-2 min-w-[200px]">
+                      {/* Display existing features */}
+                      {Object.entries(token.feats).map(([featureKey, featureValue]) => {
+                        const posFeatures = featuresDictionary[token.pos as keyof typeof featuresDictionary];
+                        const feature = posFeatures?.[featureKey] as Feature | undefined;
+                        
+                        return (
+                          <div key={featureKey} className="flex items-center space-x-1">
+                            <div className="flex-1">
+                              <Label className="text-xs text-muted-foreground">
+                                {feature?.label || featureKey}
+                              </Label>
+                              <Select
+                                value={featureValue}
+                                onValueChange={(value) => updateFeature(tokenIndex, featureKey, value)}
+                              >
+                                <SelectTrigger className="h-8 text-xs bg-background text-foreground border-border">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {feature && Object.entries(feature.values).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>
+                                      {value as string}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeFeature(tokenIndex, featureKey)}
+                              className="h-8 w-8 p-0"
                             >
-                              <SelectTrigger className="w-full">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(feature.values).map(([key, value]) => (
-                                  <SelectItem key={key} value={key}>
-                                    {value as string}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              ×
+                            </Button>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeFeature(tokenIndex, featureKey)}
-                          >
-                            Удалить
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Add new feature */}
-                  <div className="border-t border-border pt-4">
-                    <Label className="text-sm font-medium">Добавить новый признак</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                      {featuresDictionary[token.pos as keyof typeof featuresDictionary] && 
-                        Object.entries(featuresDictionary[token.pos as keyof typeof featuresDictionary] as Record<string, Feature>).map(([featureKey, feature]) => {
-                          if (token.feats[featureKey]) return null; // Skip if already exists
-                          
-                          return (
-                            <Select
-                              key={featureKey}
-                              onValueChange={(value) => updateFeature(tokenIndex, featureKey, value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder={feature.label} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(feature.values).map(([key, value]) => (
-                                  <SelectItem key={key} value={key}>
-                                    {value as string}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          );
-                        })
-                      }
+                        );
+                      })}
+                      
+                      {/* Add new feature buttons */}
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {featuresDictionary[token.pos as keyof typeof featuresDictionary] && 
+                          Object.entries(featuresDictionary[token.pos as keyof typeof featuresDictionary] as Record<string, Feature>).map(([featureKey, feature]) => {
+                            if (token.feats[featureKey]) return null; // Skip if already exists
+                            
+                            return (
+                              <Select
+                                key={featureKey}
+                                onValueChange={(value) => updateFeature(tokenIndex, featureKey, value)}
+                              >
+                                <SelectTrigger className="h-6 text-xs min-w-[100px]">
+                                  <SelectValue placeholder={`+ ${feature.label}`} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(feature.values).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>
+                                      {value as string}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            );
+                          })
+                        }
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

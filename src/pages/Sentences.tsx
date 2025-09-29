@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { fetchSentences as apiFetchSentences } from '@/lib/api';
 
 interface Sentence {
   id: number;
@@ -33,15 +34,7 @@ const Sentences = () => {
   const fetchSentences = async (page: number) => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/tagging/sentences?page=${page}&page_size=20`,
-        {
-          credentials: 'include',
-          headers: {
-            'accept': 'application/json',
-          },
-        }
-      );
+      const response = await apiFetchSentences(page, 20);
 
       if (response.ok) {
         const data: SentencesResponse = await response.json();
