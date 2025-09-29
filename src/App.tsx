@@ -3,7 +3,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppSidebar } from "@/components/AppSidebar";
+
+import Login from "./pages/Login";
+import Sentences from "./pages/Sentences";
+import SentenceDetail from "./pages/SentenceDetail";
+import CreateData from "./pages/CreateData";
+import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -11,15 +20,59 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <div className="flex min-h-screen w-full">
+                      <AppSidebar />
+                      <main className="flex-1 overflow-hidden">
+                        <header className="h-12 flex items-center border-b border-border bg-background px-4">
+                          <SidebarTrigger className="mr-4" />
+                          <h1 className="font-semibold text-foreground">
+                            Система синтаксического анализа
+                          </h1>
+                        </header>
+                        <div className="p-6">
+                          <Routes>
+                            <Route path="/" element={<Sentences />} />
+                            <Route path="/sentences" element={<Sentences />} />
+                            <Route path="/sentences/:id" element={<SentenceDetail />} />
+                            <Route
+                              path="/create-data"
+                              element={
+                                <ProtectedRoute adminOnly>
+                                  <CreateData />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route
+                              path="/users"
+                              element={
+                                <ProtectedRoute adminOnly>
+                                  <Users />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </div>
+                      </main>
+                    </div>
+                  </SidebarProvider>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
