@@ -203,7 +203,7 @@ const SentenceDetailPage = () => {
         <div className="flex items-center space-x-4">
           <Button variant="outline" size="sm" onClick={() => navigate('/sentences')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Назад
+            Артка
           </Button>
         </div>
         <Button 
@@ -212,7 +212,7 @@ const SentenceDetailPage = () => {
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           <Save className="h-4 w-4 mr-2" />
-          {saving ? 'Сохранение...' : 'Сохранить'}
+          {saving ? 'Сакталууда...' : 'Сактоо'}
         </Button>
       </div>
 
@@ -223,9 +223,9 @@ const SentenceDetailPage = () => {
       {/* Tokens Table */}
       <Card className="border-gray-200 dark:border-slate-700">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg overflow-hidden">
             <table className="w-full">
-              <thead className="bg-slate-900 dark:bg-slate-800 text-white">
+              <thead className="bg-dark-purple dark:bg-slate-800 text-white h-14">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold w-16">Id</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold w-48">Сөз</th>

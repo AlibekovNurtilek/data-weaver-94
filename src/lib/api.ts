@@ -37,18 +37,38 @@ export const logoutUser = async () => {
 };
 
 // Sentences API
-export const fetchSentences = async (page: number, pageSize: number = 20) => {
+export const fetchSentences = async (
+  page: number,
+  pageSize: number = 20,
+  search?: string,
+  status?: number
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+  });
+
+  if (search) {
+    params.append("search", search);
+  }
+
+  if (status !== undefined) {
+    params.append("status", String(status));
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/tagging/sentences?page=${page}&page_size=${pageSize}`,
+    `${API_BASE_URL}/tagging/sentences?${params.toString()}`,
     {
-      credentials: 'include',
+      credentials: "include",
       headers: {
-        'accept': 'application/json',
+        accept: "application/json",
       },
     }
   );
+
   return response;
 };
+
 
 export const fetchSentenceDetail = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/tagging/sentences/${id}`, {
