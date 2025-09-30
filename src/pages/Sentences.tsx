@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { fetchSentences as apiFetchSentences } from '@/lib/api';
+import Pagination from '@/components/Pagination';
 
 interface Sentence {
   id: number;
@@ -34,7 +32,7 @@ const Sentences = () => {
   const fetchSentences = async (page: number) => {
     setLoading(true);
     try {
-      const response = await apiFetchSentences(page, 20);
+      const response = await apiFetchSentences(page, 16);
 
       if (response.ok) {
         const data: SentencesResponse = await response.json();
@@ -66,7 +64,7 @@ const Sentences = () => {
     setCurrentPage(page);
   };
 
-  const handleSentenceClick = (id: number) => {
+  const handleRowClick = (id: number) => {
     navigate(`/sentences/${id}`);
   };
 
@@ -79,80 +77,77 @@ const Sentences = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-foreground">Список предложений</CardTitle>
-          {meta && (
-            <p className="text-sm text-muted-foreground">
-              Всего: {meta.total_items} предложений
-            </p>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {sentences.map((sentence) => (
-              <div
-                key={sentence.id}
-                onClick={() => handleSentenceClick(sentence.id)}
-                className="p-4 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-foreground font-medium mb-1">
-                      ID: {sentence.id}
-                    </p>
-                    <p className="text-foreground">{sentence.text}</p>
-                  </div>
-                  <div className="ml-4">
-                    <Badge
-                      variant={sentence.is_corrected ? "default" : "secondary"}
-                      className={
-                        sentence.is_corrected
-                          ? "bg-success text-success-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }
-                    >
+    <div className="space-y-4">
+      <div className="bg-card rounded-lg divide-y divide-border overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-black text-white h-12">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-semibold w-20">
+                  ID
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">
+                  Текст
+                </th>
+                <th className="px-6 py-3 text-center text-sm font-semibold w-48">
+                  Статус
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border bg-white">
+              {sentences.map((sentence, index) => (
+                <tr
+                  key={sentence.id}
+                  onClick={() => handleRowClick(sentence.id)}
+                  className={`cursor-pointer hover:bg-gray-50 transition-colors ${
+                    index % 2 === 0 ? 'bg-white' : 'bg-gray-200'
+                  }`}
+                >
+                  <td className="px-6 py-[10px] text-sm text-gray-900">
+                    {sentence.id}
+                  </td>
+                  <td className="px-6 py-[10px] text-sm text-gray-900">
+                    {sentence.text}
+                  </td>
+                  <td className="px-6 py-[10px]">
+                    <div className="flex items-center justify-center">
                       {sentence.is_corrected ? (
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                        <div className="flex items-center gap-2 text-green-600">
+                          <CheckCircle className="h-5 w-5" />
+                        </div>
                       ) : (
-                        <XCircle className="h-4 w-4 mr-1" />
+                        <div className="flex items-center gap-2 text-red-600">
+                          <XCircle className="h-5 w-5" />
+                        </div>
                       )}
-                      {sentence.is_corrected ? "Исправлено" : "Не исправлено"}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-          {meta && meta.total_pages > 1 && (
-            <div className="flex items-center justify-center space-x-2 mt-6">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              
-              <span className="text-sm text-muted-foreground">
-                Страница {meta.current_page} из {meta.total_pages}
-              </span>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === meta.total_pages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+        {meta && (
+          <div className="px-6 py-4 bg-transparent">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-gray-600">
+                Жалпы: {meta.total_items} сүйлөм
+              </p>
+              <p className="text-sm text-gray-600">
+                Барак {meta.current_page} / {meta.total_pages}
+              </p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            {meta.total_pages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={meta.total_pages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

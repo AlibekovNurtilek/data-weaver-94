@@ -22,10 +22,19 @@ export const useToken = () => {
   };
 
   const preparePOSUpdate = (designation: string, currentToken: Token): Partial<Token> => {
+    // ВАЖНО: При смене POS сбрасываем все признаки!
     if (customTags.includes(designation)) {
-      return { pos: 'X', xpos: designation.toLowerCase() };
+      return { 
+        pos: 'X', 
+        xpos: designation.toLowerCase(),
+        feats: {} // Очищаем признаки
+      };
     } else {
-      return { pos: designation.toUpperCase(), xpos: designation.toLowerCase() };
+      return { 
+        pos: designation.toUpperCase(), 
+        xpos: designation.toLowerCase(),
+        feats: {} // Очищаем признаки
+      };
     }
   };
 

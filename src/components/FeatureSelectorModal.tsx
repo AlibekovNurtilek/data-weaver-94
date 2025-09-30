@@ -44,7 +44,7 @@ export const FeatureSelectorModal = ({
       <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Признактарды тандаңыз
+            Касиеттерди тандаңыз
           </h3>
           <button
             onClick={onClose}
@@ -57,16 +57,13 @@ export const FeatureSelectorModal = ({
         <div className="overflow-y-auto p-6">
           {!posFeatures ? (
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-              Бул сөз түркүмү үчүн признактар жок
+              Бул сөз түркүмү үчүн касиеттер жок
             </p>
           ) : (
             <>
               {/* Selected features */}
               {Object.keys(existingFeats).length > 0 && (
                 <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Тандалган признактар:
-                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(existingFeats).map(([key, value]) => {
                       const feature = posFeatures[key];
@@ -76,10 +73,10 @@ export const FeatureSelectorModal = ({
                           className="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-700 rounded-md shadow-sm"
                         >
                           <div className="text-sm">
-                            <span className="font-medium text-gray-900 dark:text-white">
+                            {/* <span className="font-medium text-gray-900 dark:text-white">
                               {feature?.label || key}:
-                            </span>
-                            <span className="ml-1 text-gray-700 dark:text-gray-300">
+                            </span> */}
+                            <span className="ml-1 font-medium text-gray-90 dark:text-gray-300">
                               {feature?.values[value] || value}
                             </span>
                           </div>

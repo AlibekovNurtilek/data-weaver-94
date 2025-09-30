@@ -89,7 +89,7 @@ export const featuresDictionary = {
             Superl: "Күчөтмө даража", // Превосходная степень (самый)
           },
         },
-        Form:{
+        AdjForm:{
           label: "Жасалышы боюнча болунушу",
           values: {
             A: "Катыштык", 
@@ -161,7 +161,7 @@ export const featuresDictionary = {
                 Cau: "Аркылуу мамиле"
             }
         },
-        VerbForms: {
+        VerbForm: {
           label: "Озгочо формасы",
           values: {
             B: "Чакчыл",
@@ -169,7 +169,7 @@ export const featuresDictionary = {
         }
     },
     ADV:{
-      Form:{
+      AdvForm:{
         label: "Туру",
         values: {
           A: "Мезгил бышыктагыч", 

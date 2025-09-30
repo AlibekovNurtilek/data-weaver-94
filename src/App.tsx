@@ -32,11 +32,8 @@ const App = () => (
                     <div className="flex min-h-screen w-full">
                       <AppSidebar />
                       <main className="flex-1 overflow-hidden">
-                        <header className="h-12 flex items-center border-b border-border bg-background px-4">
+                       <header className="flex h-12 items-center border-b border-border bg-background px-4 md:hidden">
                           <SidebarTrigger className="mr-4" />
-                          <h1 className="font-semibold text-foreground">
-                            Система синтаксического анализа
-                          </h1>
                         </header>
                         <div className="p-6">
                           <Routes>

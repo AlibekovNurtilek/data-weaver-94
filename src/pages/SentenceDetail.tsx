@@ -8,7 +8,7 @@ import { useToken } from '@/hooks/useToken';
 import { fetchSentenceDetail, updateSentence } from '@/lib/api';
 import { POSSelectorModal } from '@/components/POSSelectorModal';
 import { FeatureSelectorModal } from '@/components/FeatureSelectorModal';
-import { TokenCard } from '@/components/TokenCard';
+import { TokenRow } from '@/components/TokenRow';
 
 interface Token {
   id: number;
@@ -52,7 +52,15 @@ const SentenceDetailPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setSentence(data);
+        // Убеждаемся что feats всегда объект, а не null
+        const normalizedData = {
+          ...data,
+          tokens: data.tokens.map((token: Token) => ({
+            ...token,
+            feats: token.feats || {}
+          }))
+        };
+        setSentence(normalizedData);
       } else {
         toast({
           title: 'Ошибка',
@@ -93,6 +101,14 @@ const SentenceDetailPage = () => {
 
     setSentence({ ...sentence, tokens: updatedTokens });
     setActivePOSModal(null);
+
+    // Уведомляем пользователя о сбросе признаков
+    if (currentToken.feats && Object.keys(currentToken.feats).length > 0) {
+      toast({
+        title: 'Признаки сброшены',
+        description: 'При смене части речи все признаки были удалены',
+      });
+    }
   };
 
   const updateFeature = (tokenIndex: number, featureKey: string, featureValue: string) => {
@@ -182,54 +198,55 @@ const SentenceDetailPage = () => {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex items-center space-x-4">
-        <Button variant="outline" size="sm" onClick={() => navigate('/sentences')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Назад
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="outline" size="sm" onClick={() => navigate('/sentences')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Назад
+          </Button>
+        </div>
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {saving ? 'Сохранение...' : 'Сохранить'}
         </Button>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Предложение ID: {sentence.id}
-        </h1>
       </div>
 
+      {/* Sentence Text */}
+     <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+        {getDisplayText()}
+      </h2>
+      {/* Tokens Table */}
       <Card className="border-gray-200 dark:border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-white">Текст предложения</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-lg text-gray-900 dark:text-white p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            {getDisplayText()}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className="border-gray-200 dark:border-slate-700">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-gray-900 dark:text-white">Токены</CardTitle>
-            <Button 
-              onClick={handleSave} 
-              disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Сохранение...' : 'Сохранить'}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {sentence.tokens.map((token, tokenIndex) => (
-              <TokenCard
-                key={token.id}
-                token={token}
-                displayPOS={getDisplayPOS(token)}
-                onUpdateField={(field, value) => updateTokenField(tokenIndex, field, value)}
-                onOpenPOSSelector={() => setActivePOSModal(tokenIndex)}
-                onOpenFeatureSelector={() => setActiveFeatureModal(tokenIndex)}
-                onRemoveFeature={(key) => removeFeature(tokenIndex, key)}
-              />
-            ))}
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-900 dark:bg-slate-800 text-white">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold w-16">Id</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold w-48">Сөз</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold w-48">Уңгу</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold w-64">Сөз түркүмү</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Касиеттер</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-slate-900">
+                {sentence.tokens.map((token, tokenIndex) => (
+                  <TokenRow
+                    key={token.id}
+                    token={token}
+                    displayPOS={getDisplayPOS(token)}
+                    onUpdateField={(field, value) => updateTokenField(tokenIndex, field, value)}
+                    onOpenPOSSelector={() => setActivePOSModal(tokenIndex)}
+                    onOpenFeatureSelector={() => setActiveFeatureModal(tokenIndex)}
+                  />
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
