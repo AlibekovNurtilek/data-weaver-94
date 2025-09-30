@@ -1,3 +1,4 @@
+//posDictionary.js
 export const posDictionary = {
     NOUN: "Зат атооч",
     PROPN: "Ээнчилүү зат атооч",

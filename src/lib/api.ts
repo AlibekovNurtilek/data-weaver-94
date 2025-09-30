@@ -14,6 +14,28 @@ export const loginUser = async (username: string, password: string) => {
   return response;
 };
 
+export const getMe = async () => {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    method: 'GET',
+    headers: {
+      'accept': 'application/json',
+    },
+    credentials: 'include',
+  });
+  return response;
+};
+
+export const logoutUser = async () => {
+  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+    },
+    credentials: 'include',
+  });
+  return response;
+};
+
 // Sentences API
 export const fetchSentences = async (page: number, pageSize: number = 20) => {
   const response = await fetch(

@@ -1,3 +1,4 @@
+//featuresDictionary.js
 export const featuresDictionary = {
     NOUN: {
         Case: {

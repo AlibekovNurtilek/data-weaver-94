@@ -4,13 +4,84 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, ChevronDown, ChevronRight, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { posDictionary } from '@/lib/posDictionary';
 import { featuresDictionary } from '@/lib/featuresDictionary';
-import { fetchSentenceDetail, updateSentence } from '@/lib/api';
+
+const customTags = ['TTSOZ', 'ETSOZ', 'ISSOZ', 'ASSOZ', 'TTSSOZ'];
+
+const categories = [
+  {
+    id: 1,
+    label: "Маани берүүчү",
+    children: [
+      {
+        id: 11,
+        label: "Зат атооч",
+        children: [
+          { id: 111, label: "Зат атооч", designation: "NOUN" },
+          { id: 112, label: "Ээнчилүү зат атооч", designation: "PROPN" },
+        ],
+      },
+      { id: 12, label: "Сын атооч", designation: "ADJ" },
+      { id: 13, label: "Ат атооч", designation: "PRON" },
+      { id: 14, label: "Сан атооч", designation: "NUM" },
+      {
+        id: 15,
+        label: "Этиш",
+        children: [
+          { id: 151, label: "Этиш", designation: "VERB" },
+          { id: 152, label: "Көмөкчү этиш", designation: "AUX" },
+        ],
+      },
+      { id: 16, label: "Тактооч", designation: "ADV" },
+    ],
+  },
+  {
+    id: 2,
+    label: "Маани бербөөчү же кызматчы",
+    children: [
+      { id: 21, label: "Байламта", designation: "CCONJ" },
+      { id: 22, label: "Жандооч", designation: "SCONJ" },
+      { id: 23, label: "Бөлүкчө", designation: "PART" },
+      { id: 24, label: "Модалдык сөз", designation: "INTJ" },
+    ],
+  },
+  {
+    id: 3,
+    label: "Өзгөчө сөз түркүмдөрү",
+    children: [
+      {
+        id: 31,
+        label: "Тууранды сөз",
+        children: [
+          { id: 311, label: "Табыш тууранды сөз", designation: "TTSOZ" },
+          { id: 312, label: "Элес тууранды сөз", designation: "ETSOZ" },
+        ],
+      },
+      {
+        id: 32,
+        label: "Сырдык сөз",
+        children: [
+          { id: 321, label: "Ички сезимди билдирүүчү", designation: "ISSOZ" },
+          { id: 322, label: "Айбанаттарга карата айтылуучу", designation: "ASSOZ" },
+          { id: 323, label: "Турмуш тиричиликте колдонулуучу", designation: "TTSSOZ" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 4,
+    label: "Башка...",
+    children: [
+      { id: 41, label: "Атоочтук", designation: "ATOOCH" },
+      { id: 42, label: "Кыймыл атооч", designation: "KTOOCH" },
+      { id: 43, label: "Тыныш белгиси", designation: "PUNCT" },
+      { id: 44, label: "Символ", designation: "SYM" },
+    ],
+  },
+];
 
 interface Feature {
   label: string;
@@ -34,6 +105,145 @@ interface SentenceDetail {
   tokens: Token[];
 }
 
+const POSSelector = ({ value, onSelect, onClose }: { value: string; onSelect: (designation: string) => void; onClose: () => void }) => {
+  const [openCategory, setOpenCategory] = useState<number | null>(null);
+
+  const handleSelect = (designation: string) => {
+    onSelect(designation);
+    onClose();
+  };
+
+  const toggleCategory = (id: number) => {
+    setOpenCategory(openCategory === id ? null : id);
+  };
+
+  const renderItem = (item: any, level: number = 0) => {
+    if (item.designation) {
+      return (
+        <button
+          key={item.id}
+          onClick={() => handleSelect(item.designation)}
+          className="w-full text-left px-4 py-2 hover:bg-accent rounded-md text-sm"
+          style={{ paddingLeft: `${(level + 1) * 16}px` }}
+        >
+          {item.label}
+        </button>
+      );
+    }
+
+    const isOpen = openCategory === item.id;
+    return (
+      <div key={item.id}>
+        <button
+          onClick={() => toggleCategory(item.id)}
+          className="w-full flex items-center justify-between px-4 py-2 hover:bg-accent rounded-md text-sm font-medium"
+          style={{ paddingLeft: `${level * 16}px` }}
+        >
+          <span>{item.label}</span>
+          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </button>
+        {isOpen && item.children && (
+          <div className="mt-1">
+            {item.children.map((child: any) => renderItem(child, level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="absolute z-50 mt-2 w-full bg-popover border border-border rounded-md shadow-lg max-h-96 overflow-y-auto">
+      <div className="p-2">
+        {categories.map((category) => renderItem(category))}
+      </div>
+    </div>
+  );
+};
+
+const FeatureSelector = ({ 
+  tokenPos, 
+  existingFeats, 
+  onSelect, 
+  onClose 
+}: { 
+  tokenPos: string; 
+  existingFeats: Record<string, string>; 
+  onSelect: (key: string, value: string) => void; 
+  onClose: () => void;
+}) => {
+  const [openFeature, setOpenFeature] = useState<string | null>(null);
+  const posFeatures = featuresDictionary[tokenPos as keyof typeof featuresDictionary] as Record<string, Feature> | undefined;
+
+  if (!posFeatures) {
+    return (
+      <div className="absolute z-50 mt-2 w-full bg-popover border border-border rounded-md shadow-lg p-4">
+        <p className="text-sm text-muted-foreground">Бул сөз түркүмү үчүн признактар жок</p>
+      </div>
+    );
+  }
+
+  const toggleFeature = (key: string) => {
+    setOpenFeature(openFeature === key ? null : key);
+  };
+
+  const handleSelect = (featureKey: string, valueKey: string) => {
+    onSelect(featureKey, valueKey);
+    setOpenFeature(null);
+  };
+
+  return (
+    <div className="absolute z-50 mt-2 w-full bg-popover border border-border rounded-md shadow-lg max-h-96 overflow-y-auto">
+      {/* Selected features at top */}
+      {Object.keys(existingFeats).length > 0 && (
+        <div className="p-3 border-b border-border max-h-32 overflow-y-auto">
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(existingFeats).map(([key, value]) => {
+              const feature = posFeatures[key];
+              return (
+                <div key={key} className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/20 rounded-md text-xs">
+                  <span className="font-medium">{feature?.label || key}:</span>
+                  <span>{feature?.values[value] || value}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
+      {/* Available features */}
+      <div className="p-2">
+        {Object.entries(posFeatures).map(([featureKey, feature]) => {
+          const isOpen = openFeature === featureKey;
+          return (
+            <div key={featureKey} className="mb-1">
+              <button
+                onClick={() => toggleFeature(featureKey)}
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-accent rounded-md text-sm font-medium"
+              >
+                <span>{feature.label}</span>
+                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+              {isOpen && (
+                <div className="mt-1 ml-2">
+                  {Object.entries(feature.values).map(([valueKey, valueLabel]) => (
+                    <button
+                      key={valueKey}
+                      onClick={() => handleSelect(featureKey, valueKey)}
+                      className="w-full text-left px-4 py-2 hover:bg-accent rounded-md text-sm"
+                    >
+                      {valueLabel}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const SentenceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -41,11 +251,16 @@ const SentenceDetailPage = () => {
   const [sentence, setSentence] = useState<SentenceDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activePOSSelector, setActivePOSSelector] = useState<number | null>(null);
+  const [activeFeatureSelector, setActiveFeatureSelector] = useState<number | null>(null);
 
-  const fetchSentenceData = async () => {
+  const fetchSentenceDetail = async () => {
     setLoading(true);
     try {
-      const response = await fetchSentenceDetail(Number(id));
+      const response = await fetch(`http://localhost:8000/tagging/sentences/${id}`, {
+        credentials: 'include',
+        headers: { 'accept': 'application/json' },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -70,24 +285,48 @@ const SentenceDetailPage = () => {
 
   useEffect(() => {
     if (id) {
-      fetchSentenceData();
+      fetchSentenceDetail();
     }
   }, [id]);
+
+  const getDisplayPOS = (token: Token) => {
+    if (token.pos !== 'X' && !customTags.includes(token.pos)) {
+      return posDictionary[token.pos as keyof typeof posDictionary] || token.pos;
+    } else {
+      const xposUpper = token.xpos.toUpperCase();
+      return posDictionary[xposUpper as keyof typeof posDictionary] || xposUpper;
+    }
+  };
 
   const updateToken = (tokenIndex: number, field: string, value: string) => {
     if (!sentence) return;
 
     const updatedTokens = sentence.tokens.map((token, index) => {
       if (index === tokenIndex) {
-        if (field === 'feats') {
-          return { ...token, feats: JSON.parse(value) };
-        }
         return { ...token, [field]: value };
       }
       return token;
     });
 
     setSentence({ ...sentence, tokens: updatedTokens });
+  };
+
+  const handlePOSSelect = (tokenIndex: number, designation: string) => {
+    if (!sentence) return;
+
+    const updatedTokens = sentence.tokens.map((token, index) => {
+      if (index === tokenIndex) {
+        if (customTags.includes(designation)) {
+          return { ...token, pos: 'X', xpos: designation.toLowerCase() };
+        } else {
+          return { ...token, pos: designation.toUpperCase(), xpos: designation.toLowerCase() };
+        }
+      }
+      return token;
+    });
+
+    setSentence({ ...sentence, tokens: updatedTokens });
+    setActivePOSSelector(null);
   };
 
   const updateFeature = (tokenIndex: number, featureKey: string, featureValue: string) => {
@@ -138,7 +377,15 @@ const SentenceDetailPage = () => {
         tokens: sentence.tokens
       };
 
-      const response = await updateSentence(Number(id), payload);
+      const response = await fetch(`http://localhost:8000/tagging/sentences/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (response.ok) {
         toast({
@@ -176,7 +423,7 @@ const SentenceDetailPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <div className="flex items-center space-x-4">
         <Button variant="outline" size="sm" onClick={() => navigate('/sentences')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -209,129 +456,102 @@ const SentenceDetailPage = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-foreground">№</TableHead>
-                <TableHead className="text-foreground">Форма</TableHead>
-                <TableHead className="text-foreground">Лемма</TableHead>
-                <TableHead className="text-foreground">Сөз түркүмдөрү</TableHead>
-                <TableHead className="text-foreground">Белгилер</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sentence.tokens.map((token, tokenIndex) => (
-                <TableRow key={token.id}>
-                  <TableCell className="text-foreground font-medium">
-                    {token.token_index}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={token.form}
-                      onChange={(e) => updateToken(tokenIndex, 'form', e.target.value)}
-                      className="min-w-[120px] bg-background text-foreground border-border"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={token.lemma}
-                      onChange={(e) => updateToken(tokenIndex, 'lemma', e.target.value)}
-                      className="min-w-[120px] bg-background text-foreground border-border"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={token.pos}
-                      onValueChange={(value) => {
-                        updateToken(tokenIndex, 'pos', value);
-                        updateToken(tokenIndex, 'xpos', value.toLowerCase());
-                      }}
-                    >
-                      <SelectTrigger className="min-w-[150px] bg-background text-foreground border-border">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(posDictionary).map(([key, value]) => (
-                          <SelectItem key={key} value={key}>
-                            {value as string}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-2 min-w-[200px]">
-                      {/* Display existing features */}
-                      {Object.entries(token.feats).map(([featureKey, featureValue]) => {
-                        const posFeatures = featuresDictionary[token.pos as keyof typeof featuresDictionary];
-                        const feature = posFeatures?.[featureKey] as Feature | undefined;
-                        
-                        return (
-                          <div key={featureKey} className="flex items-center space-x-1">
-                            <div className="flex-1">
-                              <Label className="text-xs text-muted-foreground">
-                                {feature?.label || featureKey}
-                              </Label>
-                              <Select
-                                value={featureValue}
-                                onValueChange={(value) => updateFeature(tokenIndex, featureKey, value)}
-                              >
-                                <SelectTrigger className="h-8 text-xs bg-background text-foreground border-border">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {feature && Object.entries(feature.values).map(([key, value]) => (
-                                    <SelectItem key={key} value={key}>
-                                      {value as string}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeFeature(tokenIndex, featureKey)}
-                              className="h-8 w-8 p-0"
-                            >
-                              ×
-                            </Button>
-                          </div>
-                        );
-                      })}
-                      
-                      {/* Add new feature buttons */}
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {featuresDictionary[token.pos as keyof typeof featuresDictionary] && 
-                          Object.entries(featuresDictionary[token.pos as keyof typeof featuresDictionary] as Record<string, Feature>).map(([featureKey, feature]) => {
-                            if (token.feats[featureKey]) return null; // Skip if already exists
-                            
-                            return (
-                              <Select
-                                key={featureKey}
-                                onValueChange={(value) => updateFeature(tokenIndex, featureKey, value)}
-                              >
-                                <SelectTrigger className="h-6 text-xs min-w-[100px]">
-                                  <SelectValue placeholder={`+ ${feature.label}`} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(feature.values).map(([key, value]) => (
-                                    <SelectItem key={key} value={key}>
-                                      {value as string}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            );
-                          })
-                        }
-                      </div>
+          <div className="space-y-6">
+            {sentence.tokens.map((token, tokenIndex) => {
+              const posFeatures = featuresDictionary[token.pos !== 'X' ? token.pos : token.xpos.toUpperCase() as keyof typeof featuresDictionary] as Record<string, Feature> | undefined;
+              
+              return (
+                <div key={token.id} className="border border-border rounded-lg p-6 bg-card">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Индекс</Label>
+                      <Input value={token.token_index} disabled className="bg-muted" />
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Форма</Label>
+                      <Input
+                        value={token.form}
+                        onChange={(e) => updateToken(tokenIndex, 'form', e.target.value)}
+                        className="border-border"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Лемма</Label>
+                      <Input
+                        value={token.lemma}
+                        onChange={(e) => updateToken(tokenIndex, 'lemma', e.target.value)}
+                        className="border-border"
+                      />
+                    </div>
+                    
+                    <div className="relative">
+                      <Label className="text-sm font-medium mb-2 block">Сөз түркүмдөрү</Label>
+                      <button
+                        onClick={() => setActivePOSSelector(activePOSSelector === tokenIndex ? null : tokenIndex)}
+                        className="w-full px-3 py-2 text-left border border-border rounded-md bg-background hover:bg-accent flex items-center justify-between"
+                      >
+                        <span className="text-sm">{getDisplayPOS(token)}</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      {activePOSSelector === tokenIndex && (
+                        <POSSelector
+                          value={token.pos}
+                          onSelect={(designation) => handlePOSSelect(tokenIndex, designation)}
+                          onClose={() => setActivePOSSelector(null)}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Признаки (Features)</Label>
+                    
+                    {Object.keys(token.feats).length > 0 && (
+                      <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-3 bg-muted/50 rounded-lg border border-border">
+                        {Object.entries(token.feats).map(([featureKey, featureValue]) => {
+                          const feature = posFeatures?.[featureKey];
+                          
+                          return (
+                            <div key={featureKey} className="inline-flex items-center gap-2 px-3 py-2 bg-primary/10 border border-primary/30 rounded-md">
+                              <div className="text-sm">
+                                <span className="font-medium text-foreground">{feature?.label || featureKey}:</span>
+                                <span className="ml-1 text-foreground">{feature?.values[featureValue] || featureValue}</span>
+                              </div>
+                              <button
+                                onClick={() => removeFeature(tokenIndex, featureKey)}
+                                className="p-0.5 hover:bg-destructive/20 rounded"
+                              >
+                                <X className="h-3 w-3 text-destructive" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="relative">
+                      <button
+                        onClick={() => setActiveFeatureSelector(activeFeatureSelector === tokenIndex ? null : tokenIndex)}
+                        className="w-full px-4 py-3 text-left border-2 border-dashed border-border rounded-md bg-background hover:bg-accent hover:border-primary/50 transition-colors"
+                      >
+                        <span className="text-sm font-medium text-muted-foreground">+ Добавить признак</span>
+                      </button>
+                      {activeFeatureSelector === tokenIndex && (
+                        <FeatureSelector
+                          tokenPos={token.pos !== 'X' ? token.pos : token.xpos.toUpperCase()}
+                          existingFeats={token.feats}
+                          onSelect={(key, value) => updateFeature(tokenIndex, key, value)}
+                          onClose={() => setActiveFeatureSelector(null)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,16 +1,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { loginUser } from '@/lib/api';
+import { loginUser, getMe, logoutUser } from '@/lib/api';
 
 interface User {
   username: string;
   role: string;
-  exp: number;
+  id: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -24,62 +27,36 @@ export const useAuth = () => {
   return context;
 };
 
-// Decode JWT token
-const decodeToken = (token: string): User | null => {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    return null;
-  }
-};
-
-// Get token from cookie
-const getTokenFromCookie = (): string | null => {
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
-    if (name === 'access_token') {
-      return value;
-    }
-  }
-  return null;
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user is authenticated on mount
-  useEffect(() => {
-    const token = getTokenFromCookie();
-    if (token) {
-      const userData = decodeToken(token);
-      if (userData && userData.exp > Date.now() / 1000) {
-        setUser(userData);
+  // Load current user from server (cookie-based session)
+  const loadCurrentUser = async () => {
+    try {
+      const response = await getMe();
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data as User);
+      } else {
+        setUser(null);
       }
+    } catch {
+      setUser(null);
     }
-    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadCurrentUser().finally(() => setLoading(false));
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       const response = await loginUser(username, password);
-
       if (response.ok) {
-        const data = await response.json();
-        const userData = decodeToken(data.access_token);
-        if (userData) {
-          setUser(userData);
-          return true;
-        }
+        // Cookie is set by server; fetch current user
+        await loadCurrentUser();
+        return true;
       }
       return false;
     } catch (error) {
@@ -88,10 +65,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    // Clear cookie
-    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  const logout = async (): Promise<void> => {
+    try {
+      await logoutUser();
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
