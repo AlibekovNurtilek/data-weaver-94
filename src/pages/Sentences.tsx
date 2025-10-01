@@ -4,6 +4,13 @@ import { CheckCircle, XCircle, Search, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { fetchSentences as apiFetchSentences } from '@/lib/api';
 import Pagination from '@/components/Pagination';
+import { useAppDispatch, useAppSelector } from '@/hooks/redux';
+import { 
+  setSearchQuery, 
+  setSearchInput, 
+  setStatusFilter, 
+  setCurrentPage 
+} from '@/store/slices/sentencesSlice';
 
 interface Sentence {
   id: number;
@@ -23,16 +30,16 @@ interface SentencesResponse {
 
 const Sentences = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const dispatch = useAppDispatch();
+  
+  // Redux state
+  const { searchQuery, searchInput, statusFilter, currentPage } = useAppSelector(
+    (state) => state.sentences
+  );
+  
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [meta, setMeta] = useState<SentencesResponse['meta'] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(() => {
-    const pageParam = searchParams.get('page');
-    return pageParam ? parseInt(pageParam, 10) : 1;
-  });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -74,9 +81,9 @@ const Sentences = () => {
     const pageParam = searchParams.get('page');
     const pageFromUrl = pageParam ? parseInt(pageParam, 10) : 1;
     if (pageFromUrl !== currentPage) {
-      setCurrentPage(pageFromUrl);
+      dispatch(setCurrentPage(pageFromUrl));
     }
-  }, [searchParams]);
+  }, [searchParams, currentPage, dispatch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -90,9 +97,9 @@ const Sentences = () => {
   }, []);
 
   const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
+    dispatch(setCurrentPage(page));
     setSearchParams({ page: page.toString() });
-  }, [setSearchParams]);
+  }, [dispatch, setSearchParams]);
 
   const handleRowClick = useCallback((id: number) => {
     navigate(`/sentences/${id}`);
@@ -100,25 +107,25 @@ const Sentences = () => {
 
   const handleSearchInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setSearchInput(value);
+    dispatch(setSearchInput(value));
 
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
 
     debounceTimer.current = setTimeout(() => {
-      setSearchQuery(value);
-      setCurrentPage(1);
+      dispatch(setSearchQuery(value));
+      dispatch(setCurrentPage(1));
       setSearchParams({ page: '1' });
     }, 500);
-  }, [setSearchParams]);
+  }, [dispatch, setSearchParams]);
 
   const handleStatusSelect = useCallback((value: number | undefined) => {
-    setStatusFilter(value);
-    setCurrentPage(1);
+    dispatch(setStatusFilter(value));
+    dispatch(setCurrentPage(1));
     setSearchParams({ page: '1' });
     setIsDropdownOpen(false);
-  }, [setSearchParams]);
+  }, [dispatch, setSearchParams]);
 
   const getStatusLabel = () => {
     if (statusFilter === undefined) return 'Бардыгы';
