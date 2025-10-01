@@ -66,6 +66,7 @@ const SentenceDetailPage = () => {
           title: 'Ошибка',
           description: 'Не удалось загрузить детали предложения',
           variant: 'destructive',
+          duration: 1000
         });
       }
     } catch (error) {
@@ -73,6 +74,7 @@ const SentenceDetailPage = () => {
         title: 'Ошибка',
         description: 'Произошла ошибка при загрузке данных',
         variant: 'destructive',
+        duration: 1000
       });
     } finally {
       setLoading(false);
@@ -101,14 +103,6 @@ const SentenceDetailPage = () => {
 
     setSentence({ ...sentence, tokens: updatedTokens });
     setActivePOSModal(null);
-
-    // Уведомляем пользователя о сбросе признаков
-    if (currentToken.feats && Object.keys(currentToken.feats).length > 0) {
-      toast({
-        title: 'Признаки сброшены',
-        description: 'При смене части речи все признаки были удалены',
-      });
-    }
   };
 
   const updateFeature = (tokenIndex: number, featureKey: string, featureValue: string) => {
@@ -156,24 +150,15 @@ const SentenceDetailPage = () => {
       };
 
       const response = await updateSentence(Number(id), payload);
-
-      if (response.ok) {
-        toast({
-          title: 'Успешно',
-          description: 'Изменения сохранены',
-        });
-      } else {
-        toast({
-          title: 'Ошибка',
-          description: 'Не удалось сохранить изменения',
-          variant: 'destructive',
-        });
+      if(response.ok){
+        navigate(-1)
       }
     } catch (error) {
       toast({
         title: 'Ошибка',
         description: 'Произошла ошибка при сохранении',
         variant: 'destructive',
+        duration: 1000
       });
     } finally {
       setSaving(false);
@@ -201,7 +186,7 @@ const SentenceDetailPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => navigate('/sentences')}>
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Артка
           </Button>
