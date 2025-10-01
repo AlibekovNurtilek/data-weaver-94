@@ -44,16 +44,16 @@ const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center text-foreground">
-            Синтаксический анализ
+            Кыргыз тилинин корпусу
           </CardTitle>
           <p className="text-sm text-muted-foreground text-center">
-            Войдите в систему для продолжения
+            маалымат чогултуу системасы
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Имя пользователя</Label>
+              <Label htmlFor="username">Колдонуучунун аты</Label>
               <Input
                 id="username"
                 type="text"
@@ -64,7 +64,7 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Пароль</Label>
+              <Label htmlFor="password">Сыр сөз</Label>
               <Input
                 id="password"
                 type="password"
@@ -79,7 +79,7 @@ const Login = () => {
               className="w-full" 
               disabled={loading}
             >
-              {loading ? "Вход..." : "Войти"}
+              {loading ? "Кирүү..." : "Кирүү"}
             </Button>
           </form>
         </CardContent>
