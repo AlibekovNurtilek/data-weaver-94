@@ -95,8 +95,8 @@ const Sentences = () => {
   }, [setSearchParams]);
 
   const handleRowClick = useCallback((id: number) => {
-    navigate(`/sentences/${id}?returnPage=${currentPage}`);
-  }, [navigate, currentPage]);
+    navigate(`/sentences/${id}`);
+  }, [navigate]);
 
   const handleSearchInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
