@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -30,8 +30,11 @@ interface SentenceDetail {
 const SentenceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { getDisplayPOS, preparePOSUpdate } = useToken();
+
+  const returnPage = searchParams.get('returnPage') || '1';
 
   const [sentence, setSentence] = useState<SentenceDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -151,7 +154,7 @@ const SentenceDetailPage = () => {
 
       const response = await updateSentence(Number(id), payload);
       if(response.ok){
-        navigate(-1)
+        navigate(`/sentences?page=${returnPage}`);
       }
     } catch (error) {
       toast({
@@ -186,7 +189,7 @@ const SentenceDetailPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/sentences?page=${returnPage}`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Артка
           </Button>

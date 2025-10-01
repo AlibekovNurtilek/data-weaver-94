@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Search, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { fetchSentences as apiFetchSentences } from '@/lib/api';
@@ -22,10 +22,14 @@ interface SentencesResponse {
 }
 
 const Sentences = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [meta, setMeta] = useState<SentencesResponse['meta'] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const pageParam = searchParams.get('page');
+    return pageParam ? parseInt(pageParam, 10) : 1;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined);
@@ -67,6 +71,14 @@ const Sentences = () => {
   }, [currentPage, searchQuery, statusFilter, fetchSentences]);
 
   useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const pageFromUrl = pageParam ? parseInt(pageParam, 10) : 1;
+    if (pageFromUrl !== currentPage) {
+      setCurrentPage(pageFromUrl);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
@@ -79,11 +91,12 @@ const Sentences = () => {
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  }, []);
+    setSearchParams({ page: page.toString() });
+  }, [setSearchParams]);
 
   const handleRowClick = useCallback((id: number) => {
-    navigate(`/sentences/${id}`);
-  }, [navigate]);
+    navigate(`/sentences/${id}?returnPage=${currentPage}`);
+  }, [navigate, currentPage]);
 
   const handleSearchInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -96,14 +109,16 @@ const Sentences = () => {
     debounceTimer.current = setTimeout(() => {
       setSearchQuery(value);
       setCurrentPage(1);
+      setSearchParams({ page: '1' });
     }, 500);
-  }, []);
+  }, [setSearchParams]);
 
   const handleStatusSelect = useCallback((value: number | undefined) => {
     setStatusFilter(value);
     setCurrentPage(1);
+    setSearchParams({ page: '1' });
     setIsDropdownOpen(false);
-  }, []);
+  }, [setSearchParams]);
 
   const getStatusLabel = () => {
     if (statusFilter === undefined) return 'Бардыгы';
