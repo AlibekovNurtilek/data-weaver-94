@@ -197,7 +197,7 @@ const SentenceDetailPage = () => {
   }
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="pb-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -217,11 +217,11 @@ const SentenceDetailPage = () => {
       </div>
 
       {/* Sentence Text */}
-     <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+     <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mt-5">
         {getDisplayText()}
       </h2>
       {/* Tokens Table */}
-      <Card className="border-gray-200 dark:border-slate-700">
+      <Card className="border-gray-200 dark:border-slate-700 mt-5">
         <CardContent className="p-0">
           <div className="overflow-x-auto rounded-lg overflow-hidden">
             <table className="w-full">

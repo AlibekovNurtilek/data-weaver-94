@@ -10,7 +10,7 @@ interface POSSelectorModalProps {
 }
 
 export const POSSelectorModal = ({ isOpen, currentValue, onSelect, onClose }: POSSelectorModalProps) => {
-  const [openCategory, setOpenCategory] = useState<number | null>(null);
+  const [openCategories, setOpenCategories] = useState<Set<number>>(new Set());
 
   if (!isOpen) return null;
 
@@ -20,7 +20,15 @@ export const POSSelectorModal = ({ isOpen, currentValue, onSelect, onClose }: PO
   };
 
   const toggleCategory = (id: number) => {
-    setOpenCategory(openCategory === id ? null : id);
+    setOpenCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
 
   const renderItem = (item: any, level: number = 0) => {
@@ -37,7 +45,7 @@ export const POSSelectorModal = ({ isOpen, currentValue, onSelect, onClose }: PO
       );
     }
 
-    const isOpen = openCategory === item.id;
+    const isOpen = openCategories.has(item.id);
     return (
       <div key={item.id}>
         <button

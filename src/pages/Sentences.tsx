@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Search, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +22,6 @@ interface SentencesResponse {
 }
 
 const Sentences = () => {
-  console.log("page rendered")
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [meta, setMeta] = useState<SentencesResponse['meta'] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +35,7 @@ const Sentences = () => {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchSentences = async (page: number, search?: string, status?: number) => {
+  const fetchSentences = useCallback(async (page: number, search?: string, status?: number) => {
     setLoading(true);
     try {
       const response = await apiFetchSentences(page, 16, search, status);
@@ -61,11 +60,11 @@ const Sentences = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchSentences(currentPage, searchQuery, statusFilter);
-  }, [currentPage, searchQuery, statusFilter]);
+  }, [currentPage, searchQuery, statusFilter, fetchSentences]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,15 +77,15 @@ const Sentences = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
-  const handleRowClick = (id: number) => {
+  const handleRowClick = useCallback((id: number) => {
     navigate(`/sentences/${id}`);
-  };
+  }, [navigate]);
 
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchInput(value);
 
@@ -98,13 +97,13 @@ const Sentences = () => {
       setSearchQuery(value);
       setCurrentPage(1);
     }, 500);
-  };
+  }, []);
 
-  const handleStatusSelect = (value: number | undefined) => {
+  const handleStatusSelect = useCallback((value: number | undefined) => {
     setStatusFilter(value);
     setCurrentPage(1);
     setIsDropdownOpen(false);
-  };
+  }, []);
 
   const getStatusLabel = () => {
     if (statusFilter === undefined) return 'Бардыгы';
@@ -112,14 +111,6 @@ const Sentences = () => {
     if (statusFilter === 0) return 'Иштеле электер';
     return 'Бардыгы';
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="mt-8 max-w-[1500px] mx-auto">
@@ -203,7 +194,25 @@ const Sentences = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border bg-white">
-              {sentences.map((sentence, index) => (
+              {loading && (
+                <tr>
+                  <td colSpan={3} className="px-6 py-6 text-center text-sm text-gray-600">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
+                  </td>
+                </tr>
+              )}
+
+              {!loading && sentences.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-6 py-6 text-center text-дп text-gray-600">
+                    Маалымат табылган жок
+                  </td>
+                </tr>
+              )}
+
+              {!loading && sentences.length > 0 && sentences.map((sentence, index) => (
                 <tr
                   key={sentence.id}
                   onClick={() => handleRowClick(sentence.id)}

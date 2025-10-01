@@ -79,14 +79,14 @@ export const TokenRow = ({
       </td>
 
       {/* Касиеттер (Признаки) */}
-      <td className="px-4 py-3">
+      <td className="">
         <button
           onClick={hasAvailableFeatures ? onOpenFeatureSelector : undefined}
           disabled={!hasAvailableFeatures}
-          className={`w-full min-h-[36px] px-3 py-2 text-left border rounded-md transition-colors ${
+          className={`max-w-full min-h-[36px] px-3 py-2 text-left transition-colors ${
             !hasAvailableFeatures
-              ? 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 cursor-not-allowed'
-              : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 dark:hover:border-blue-600 cursor-pointer'
+              ? 'cursor-not-allowed'
+              : 'cursor-pointer'
           }`}
         >
           {hasSelectedFeatures ? (
@@ -96,12 +96,12 @@ export const TokenRow = ({
                 return (
                   <span
                     key={featureKey}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700 rounded text-xs"
+                    className="inline-flex items-center gap-1 px-4 py-2 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700 rounded text-xs"
                   >
-                    <span className="font-medium text-gray-900 dark:text-white">
+                    {/* <span className="font-medium text-gray-900 dark:text-white">
                       {feature?.label || featureKey}:
-                    </span>
-                    <span className="text-gray-700 dark:text-gray-300">
+                    </span> */}
+                    <span className="text-gray-900 font-medium dark:text-gray-300">
                       {feature?.values[featureValue] || featureValue}
                     </span>
                   </span>

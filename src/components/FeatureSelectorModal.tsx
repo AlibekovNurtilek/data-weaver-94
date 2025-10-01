@@ -40,21 +40,15 @@ export const FeatureSelectorModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0  z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col  mx-2">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Касиеттерди тандаңыз
           </h3>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
-          >
-            <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
-        <div className="overflow-y-auto p-6">
+        <div className="overflow-y-auto p-6 flex-1">
           {!posFeatures ? (
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
               Бул сөз түркүмү үчүн касиеттер жок
@@ -63,7 +57,7 @@ export const FeatureSelectorModal = ({
             <>
               {/* Selected features */}
               {Object.keys(existingFeats).length > 0 && (
-                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="mb-4">
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(existingFeats).map(([key, value]) => {
                       const feature = posFeatures[key];
@@ -76,7 +70,7 @@ export const FeatureSelectorModal = ({
                             {/* <span className="font-medium text-gray-900 dark:text-white">
                               {feature?.label || key}:
                             </span> */}
-                            <span className="ml-1 font-medium text-gray-90 dark:text-gray-300">
+                            <span className="ml-1 font-medium text-gray-900 dark:text-gray-300">
                               {feature?.values[value] || value}
                             </span>
                           </div>
@@ -131,6 +125,16 @@ export const FeatureSelectorModal = ({
               </div>
             </>
           )}
+        </div>
+
+        {/* Save button at the bottom */}
+        <div className="flex items-center justify-end px-6 py-4 border-t border-gray-200 dark:border-slate-700">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-md transition-colors"
+          >
+            Сактоо
+          </button>
         </div>
       </div>
     </div>
