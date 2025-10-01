@@ -1,3 +1,6 @@
+//api.ts
+
+
 import { API_BASE_URL } from './config';
 
 // Auth API
@@ -103,5 +106,81 @@ export const runTagging = async (formData: FormData) => {
     credentials: 'include',
     body: formData,
   });
+  return response;
+};
+
+//UsersAPI
+
+export const fetchUsers = async (
+  page: number = 1,
+  pageSize: number = 20
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+  });
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/users?${params.toString()}`,
+    {
+      credentials: "include",
+      headers: {
+        accept: "application/json",
+      },
+    }
+  );
+
+  return response;
+};
+
+export const deleteUser = async (userId: number) => {
+  const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+    method: "DELETE",
+    headers: {
+      accept: "application/json",
+    },
+    credentials: "include",
+  });
+
+  return response;
+};
+
+
+// Create user (admin only)
+export const createUser = async (userData: {
+  username: string;
+  password: string;
+  role: string
+}) => {
+  const response = await fetch(`${API_BASE_URL}/admin/users`, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(userData),
+  });
+
+  return response;
+};
+
+// Create admin user (initial setup)
+export const createAdminUser = async (userData: {
+  username: string;
+  password: string;
+  role: string;
+
+}) => {
+  const response = await fetch(`${API_BASE_URL}/admin/create-admin`, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(userData),
+  });
+
   return response;
 };

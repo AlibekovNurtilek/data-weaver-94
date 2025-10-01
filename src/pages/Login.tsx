@@ -1,3 +1,6 @@
+//Login.tsx
+
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -25,10 +28,6 @@ const Login = () => {
     const success = await login(username, password);
     
     if (success) {
-      toast({
-        title: "Успешный вход",
-        description: "Добро пожаловать в систему",
-      });
     } else {
       toast({
         title: "Ошибка входа",

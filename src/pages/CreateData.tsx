@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +11,7 @@ import { useDropzone } from 'react-dropzone';
 import { runTagging } from '@/lib/api';
 
 const CreateData = () => {
+  const navigate = useNavigate()
   const [textInput, setTextInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -78,14 +80,10 @@ const CreateData = () => {
 
       if (response.ok) {
         const data = await response.json();
-        toast({
-          title: "Успешно",
-          description: `${data.message}. Создано предложений: ${data.sentences_created}, токенов: ${data.tokens_created}`,
-        });
-        
         // Clear form
         setTextInput('');
         setSelectedFile(null);
+        navigate('/sentences')
       } else {
         toast({
           title: "Ошибка",
@@ -105,29 +103,29 @@ const CreateData = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-foreground">Создание данных</CardTitle>
+    <div className="space-y-6 max-w-[1500px] m-auto h-screen  mt-20">
+      <Card className='w-full'>
+        <CardHeader className='flex flex-col justify-center items-center'>
+          <CardTitle className="text-foreground">Жаңы маалымат түзүү</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Введите текст или загрузите txt файл для создания данных
+            Тестти жазыңыз же болбосо txt файл жүктөңүз
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="text-input">Текст для анализа</Label>
+              <Label htmlFor="text-input">Анализ үчүн текст жазыңыз</Label>
               <Textarea
                 id="text-input"
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
-                placeholder="Введите текст для синтаксического анализа..."
+                placeholder="Форфологиялык анализ үчүн текст жазыңыз"
                 className="min-h-32"
               />
             </div>
 
             <div className="space-y-4">
-              <Label>Или загрузите txt файл</Label>
+              <Label>Же болбосо txt файл киргизиңиз</Label>
               
               {/* File input */}
               <div className="flex items-center space-x-4">
@@ -151,14 +149,14 @@ const CreateData = () => {
                 <input {...getInputProps()} />
                 <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
                 {isDragActive ? (
-                  <p className="text-foreground">Отпустите файл здесь...</p>
+                  <p className="text-foreground">Файлды жүктөңүз...</p>
                 ) : (
                   <div>
                     <p className="text-foreground mb-2">
-                      Перетащите txt файл сюда или кликните для выбора
+                      Файлды алып келиңиз же болбосо бул жерге басыңыз
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Поддерживаются только txt файлы
+                      txt форматындагы файлдар гана
                     </p>
                   </div>
                 )}
@@ -174,14 +172,14 @@ const CreateData = () => {
                     size="sm"
                     onClick={() => setSelectedFile(null)}
                   >
-                    Удалить
+                    Өчүрүү
                   </Button>
                 </div>
               )}
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Обработка..." : "Создать данные"}
+              {loading ? "Иштелүүдө..." : "Маалыматты сактоо"}
             </Button>
           </form>
         </CardContent>
